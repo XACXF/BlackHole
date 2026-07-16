@@ -15,21 +15,23 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Build GCC_PREPROCESSOR_DEFINITIONS value using Python repr (avoids shell escaping entirely)
-GCC_DEF=$(python3 -c "
-import shlex
+# Write Python build script to file (avoids all shell escaping)
+cat > /tmp/build_driver.py << PYEOF
+import subprocess
+import sys
 
-driver = '''${DRIVER_NAME}'''
-bundle = '''${BUNDLE_ID}'''
-device = '''${DEVICE_NAME}'''
-chans = '''${CHANNELS}'''
+driver_name = """DRIVER_NAME_PLACEHOLDER"""
+bundle_id = """BUNDLE_ID_PLACEHOLDER"""
+device_name = """DEVICE_NAME_PLACEHOLDER"""
+channels = """CHANNELS_PLACEHOLDER"""
 
-parts = [
-    'kDriver_Name=' + repr(driver),
-    'kPlugIn_BundleID=' + repr(bundle),
-    'kDevice_Name=' + repr(device),
-    'kDevice2_Name=' + repr(device),
-    'kNumber_Of_Channels=' + chans,
+# Build GCC_PREPROCESSOR_DEFINITIONS
+gcc_parts = [
+    'kDriver_Name=' + repr(driver_name),
+    'kPlugIn_BundleID=' + repr(bundle_id),
+    'kDevice_Name=' + repr(device_name),
+    'kDevice2_Name=' + repr(device_name),
+    'kNumber_Of_Channels=' + repr(channels).replace("'",""),
     'kLatency_Frame_Size=128',
     'kDevice_IsHidden=' + repr('FALSE'),
     'kDevice_HasInput=' + repr('TRUE'),
@@ -38,21 +40,36 @@ parts = [
     'kDevice2_HasInput=' + repr('FALSE'),
     'kDevice2_HasOutput=' + repr('FALSE'),
 ]
-print('GCC_PREPROCESSOR_DEFINITIONS=' + ' '.join(parts))
-")
 
-echo "GCC_DEF: $GCC_DEF"
+gcc_def = ' '.join(gcc_parts)
+print("GCC_DEF:", repr(gcc_def))
 
-xcodebuild -project BlackHole.xcodeproj \
-  -configuration Release \
-  -target BlackHole \
-  PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
-  CODE_SIGNING_REQUIRED=NO \
-  CODE_SIGNING_ALLOWED=NO \
-  "${GCC_DEF}" \
-  OBJROOT=build/Objects \
-  SYMROOT=build/Symbols \
-  DSTROOT=build/Archive 2>&1
+cmd = [
+    'xcodebuild',
+    '-project', 'BlackHole.xcodeproj',
+    '-configuration', 'Release',
+    '-target', 'BlackHole',
+    'PRODUCT_BUNDLE_IDENTIFIER=' + bundle_id,
+    'CODE_SIGNING_REQUIRED=NO',
+    'CODE_SIGNING_ALLOWED=NO',
+    'GCC_PREPROCESSOR_DEFINITIONS=' + gcc_def,
+    'OBJROOT=build/Objects',
+    'SYMROOT=build/Symbols',
+    'DSTROOT=build/Archive',
+]
+
+result = subprocess.run(cmd, capture_output=False)
+sys.exit(result.returncode)
+PYEOF
+
+# Replace placeholders
+sed -i "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
+sed -i "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
+sed -i "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
+sed -i "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
+
+echo "Running xcodebuild via Python..."
+python3 /tmp/build_driver.py
 
 DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
