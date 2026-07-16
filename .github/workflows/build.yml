@@ -15,12 +15,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build XACmusic Driver
-        run: |
-          cd Scripts
-          chmod +x build-xacmusic.sh
-          ./build-xacmusic.sh
+        run: bash Scripts/build-xacmusic.sh
 
       - name: Upload XACmusic pkg
         uses: actions/upload-artifact@v4
@@ -36,12 +35,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build XACliv Driver
-        run: |
-          cd Scripts
-          chmod +x build-xacliv.sh
-          ./build-xacliv.sh
+        run: bash Scripts/build-xacliv.sh
 
       - name: Upload XACliv pkg
         uses: actions/upload-artifact@v4
