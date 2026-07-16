@@ -15,38 +15,13 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Generate xcconfig with quoted GCC_PREPROCESSOR_DEFINITIONS
 cat > /tmp/BlackHole-custom.xcconfig << XCEOF
 PRODUCT_BUNDLE_IDENTIFIER=${BUNDLE_ID}
 CODE_SIGNING_REQUIRED=NO
 CODE_SIGNING_ALLOWED=NO
-GCC_PREPROCESSOR_DEFINITIONS = kDriver_Name="\\"${DRIVER_NAME}\\"" kPlugIn_BundleID="\\"${BUNDLE_ID}\\"" kDevice_Name="\\"${DEVICE_NAME}\\"" kDevice2_Name="\\"${DEVICE_NAME}\\"" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden="\\"FALSE\\"" kDevice_HasInput="\\"TRUE\\"" kDevice_HasOutput="\\"TRUE\\"" kDevice2_IsHidden="\\"FALSE\\"" kDevice2_HasInput="\\"FALSE\\"" kDevice2_HasOutput="\\"FALSE\\""
+GCC_PREPROCESSOR_DEFINITIONS = kDriver_Name="\\"${DRIVER_NAME}\\"" kPlugIn_BundleID="\\"${BUNDLE_ID}\\"" kDevice_Name="\\"${DEVICE_NAME}\\"" kDevice2_Name="\\"${DEVICE_NAME}\\"" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=0 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_IsHidden=0 kDevice2_HasInput=0 kDevice2_HasOutput=0
 XCEOF
 
-echo "xcconfig content:"
-cat /tmp/BlackHole-custom.xcconfig
-
-# Also write individual -D args to a file (shell will read it)
-cat > /tmp/gcc_flags.txt << CFGEOF
--DkDriver_Name="${DRIVER_NAME}"
--DkPlugIn_BundleID="${BUNDLE_ID}"
--DkDevice_Name="${DEVICE_NAME}"
--DkDevice2_Name="${DEVICE_NAME}"
--DkNumber_Of_Channels=${CHANNELS}
--DkLatency_Frame_Size=128
--DkDevice_IsHidden="FALSE"
--DkDevice_HasInput="TRUE"
--DkDevice_HasOutput="TRUE"
--DkDevice2_IsHidden="FALSE"
--DkDevice2_HasInput="FALSE"
--DkDevice2_HasOutput="FALSE"
-CFGEOF
-
-echo ""
-echo "gcc_flags:"
-cat /tmp/gcc_flags.txt
-
-# Run xcodebuild using xcconfig
 xcodebuild -project BlackHole.xcodeproj \
   -xcconfig /tmp/BlackHole-custom.xcconfig \
   -configuration Release \
