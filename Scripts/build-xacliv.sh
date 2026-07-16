@@ -19,7 +19,7 @@ cat > /tmp/BlackHole-custom.xcconfig << XCEOF
 PRODUCT_BUNDLE_IDENTIFIER=${BUNDLE_ID}
 CODE_SIGNING_REQUIRED=NO
 CODE_SIGNING_ALLOWED=NO
-GCC_PREPROCESSOR_DEFINITIONS = kDriver_Name="\\"${DRIVER_NAME}\\"" kPlugIn_BundleID="\\"${BUNDLE_ID}\\"" kDevice_Name="\\"${DEVICE_NAME}\\"" kDevice2_Name="\\"${DEVICE_NAME}\\"" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden="\\"FALSE\\"" kDevice_HasInput="\\"TRUE\\"" kDevice_HasOutput="\\"TRUE\\"" kDevice2_IsHidden="\\"FALSE\\"" kDevice2_HasInput="\\"FALSE\\"" kDevice2_HasOutput="\\"FALSE\\""
+GCC_PREPROCESSOR_DEFINITIONS = kDriver_Name="\\"${DRIVER_NAME}\\"" kPlugIn_BundleID="\\"${BUNDLE_ID}\\"" kDevice_Name="\\"${DEVICE_NAME}\\"" kDevice2_Name="\\"${DEVICE_NAME}\\"" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=0 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_IsHidden=0 kDevice2_HasInput=0 kDevice2_HasOutput=0
 XCEOF
 
 xcodebuild -project BlackHole.xcodeproj \
