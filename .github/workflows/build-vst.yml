@@ -15,26 +15,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure (Unix Makefiles, x86_64)
-        run: cmake -B VST/build -S VST -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+      - name: Configure (Unix Makefiles)
+        run: |
+          cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --build build --target help
 
-      - name: Build all targets
-        run: cmake --build VST/build --config Release -- -j2
+      - name: Build
+        run: cmake --build build --config Release --target XAClive -- -j2
 
-      - name: Stage and package into single pkg
+      - name: Stage and package
         run: |
           set -e
           mkdir -p stage/Library/Audio/Plug-Ins/VST3 dist
-          cp -R "VST/build/XAClive_artefacts/Release/VST3/XAClive.vst3" stage/Library/Audio/Plug-Ins/VST3/
-          cp -R "VST/build/XACmusic_artefacts/Release/VST3/XACmusic.vst3" stage/Library/Audio/Plug-Ins/VST3/
-          pkgbuild --root stage \
-                   --identifier audio.xac.XACVST \
-                   --version 1.0.0 \
-                   --install-location / \
-                   dist/XACVST.pkg
-          ls -lh dist
+          cp -R "build/XAClive_artefacts/Release/VST3/XAClive.vst3" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "build/XACmusic_artefacts/Release/VST3/XACmusic.vst3" stage/Library/Audio/Plug-Ins/VST3/
+          pkgbuild --root stage --identifier audio.xac.XACVST --version 1.0.0 --install-location / dist/XACVST.pkg
 
-      - name: Upload pkg artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: XACVST-pkg
