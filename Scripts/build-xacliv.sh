@@ -3,9 +3,9 @@ set -e
 
 DRIVER_NAME="${DRIVER_NAME:-XACliv}"
 BUNDLE_ID="${BUNDLE_ID:-audio.xac.XACliv}"
-DEVICE_NAME="${DEVICE_NAME:-XACliv}"
 CHANNELS="${CHANNELS:-2}"
 PKG_NAME="${PKG_NAME:-XACliv}"
+TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
 
 echo "============================================"
 echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
@@ -30,19 +30,18 @@ xcodebuild -project BlackHole.xcodeproj \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
 
-DRIVER_PATH=$(find build/Symbols/Release -name "*.driver" | head -1)
-if [ -z "$DRIVER_PATH" ]; then
-    echo "ERROR: Driver build failed!"
-    ls -laR build/ 2>/dev/null | head -50
+DRIVER_DIR="build/Symbols/Release/${TARGET_NAME}"
+if [ ! -d "$DRIVER_DIR" ]; then
+    echo "ERROR: Driver not found at $DRIVER_DIR"
+    ls -laR build/Symbols/Release/ 2>/dev/null || echo "build/Symbols/Release not found"
     exit 1
 fi
 
-TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
-mv "$DRIVER_PATH" "build/Symbols/Release/${TARGET_NAME}"
+echo "Driver found at $DRIVER_DIR"
 
 rm -rf "Scripts/${PKG_NAME}"
 mkdir -p "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL"
-cp -R "build/Symbols/Release/${TARGET_NAME}" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
+cp -R "$DRIVER_DIR" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
 
 mkdir -p "Scripts/${PKG_NAME}/Scripts"
 cat > "Scripts/${PKG_NAME}/Scripts/postinstall" << 'POSTINSTALL'
@@ -62,4 +61,5 @@ pkgbuild \
 echo ""
 echo "============================================"
 echo "${PKG_NAME}.pkg created!"
+ls -lh "Scripts/${PKG_NAME}.pkg"
 echo "============================================"
