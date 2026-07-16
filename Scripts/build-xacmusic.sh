@@ -15,34 +15,33 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Use Python to write GCC_PREPROCESSOR_DEFINITIONS to file (avoids all shell quoting issues)
-python3 -c "
-import json, sys
+# Build GCC_PREPROCESSOR_DEFINITIONS value using Python repr (avoids shell escaping entirely)
+GCC_DEF=$(python3 -c "
+import shlex
 
-driver_name = '''${DRIVER_NAME}'''
-bundle_id = '''${BUNDLE_ID}'''
-device_name = '''${DEVICE_NAME}'''
-channels = '''${CHANNELS}'''
+driver = '''${DRIVER_NAME}'''
+bundle = '''${BUNDLE_ID}'''
+device = '''${DEVICE_NAME}'''
+chans = '''${CHANNELS}'''
 
-gcc_def = (
-    'GCC_PREPROCESSOR_DEFINITIONS=' +
-    json.dumps(
-        'kDriver_Name=' + json.dumps(driver_name)[1:-1] +
-        ' kPlugIn_BundleID=' + json.dumps(bundle_id)[1:-1] +
-        ' kDevice_Name=' + json.dumps(device_name)[1:-1] +
-        ' kDevice2_Name=' + json.dumps(device_name)[1:-1] +
-        ' kNumber_Of_Channels=' + channels +
-        ' kLatency_Frame_Size=128' +
-        ' kDevice_IsHidden=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice_HasInput=' + json.dumps('TRUE')[1:-1] +
-        ' kDevice_HasOutput=' + json.dumps('TRUE')[1:-1] +
-        ' kDevice2_IsHidden=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice2_HasInput=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice2_HasOutput=' + json.dumps('FALSE')[1:-1]
-    )
-)
-print(gcc_def)
-"
+parts = [
+    'kDriver_Name=' + repr(driver),
+    'kPlugIn_BundleID=' + repr(bundle),
+    'kDevice_Name=' + repr(device),
+    'kDevice2_Name=' + repr(device),
+    'kNumber_Of_Channels=' + chans,
+    'kLatency_Frame_Size=128',
+    'kDevice_IsHidden=' + repr('FALSE'),
+    'kDevice_HasInput=' + repr('TRUE'),
+    'kDevice_HasOutput=' + repr('TRUE'),
+    'kDevice2_IsHidden=' + repr('FALSE'),
+    'kDevice2_HasInput=' + repr('FALSE'),
+    'kDevice2_HasOutput=' + repr('FALSE'),
+]
+print('GCC_PREPROCESSOR_DEFINITIONS=' + ' '.join(parts))
+")
+
+echo "GCC_DEF: $GCC_DEF"
 
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
@@ -50,31 +49,7 @@ xcodebuild -project BlackHole.xcodeproj \
   PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  "$(python3 -c "
-import json
-driver_name = '''${DRIVER_NAME}'''
-bundle_id = '''${BUNDLE_ID}'''
-device_name = '''${DEVICE_NAME}'''
-channels = '''${CHANNELS}'''
-gcc_def = (
-    'GCC_PREPROCESSOR_DEFINITIONS=' +
-    json.dumps(
-        'kDriver_Name=' + json.dumps(driver_name)[1:-1] +
-        ' kPlugIn_BundleID=' + json.dumps(bundle_id)[1:-1] +
-        ' kDevice_Name=' + json.dumps(device_name)[1:-1] +
-        ' kDevice2_Name=' + json.dumps(device_name)[1:-1] +
-        ' kNumber_Of_Channels=' + channels +
-        ' kLatency_Frame_Size=128' +
-        ' kDevice_IsHidden=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice_HasInput=' + json.dumps('TRUE')[1:-1] +
-        ' kDevice_HasOutput=' + json.dumps('TRUE')[1:-1] +
-        ' kDevice2_IsHidden=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice2_HasInput=' + json.dumps('FALSE')[1:-1] +
-        ' kDevice2_HasOutput=' + json.dumps('FALSE')[1:-1]
-    )
-)
-print(gcc_def)
-")" \
+  "${GCC_DEF}" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
