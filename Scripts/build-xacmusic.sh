@@ -15,7 +15,6 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Write Python build script to file (avoids all shell escaping)
 cat > /tmp/build_driver.py << PYEOF
 import subprocess
 import sys
@@ -25,7 +24,6 @@ bundle_id = """BUNDLE_ID_PLACEHOLDER"""
 device_name = """DEVICE_NAME_PLACEHOLDER"""
 channels = """CHANNELS_PLACEHOLDER"""
 
-# Build GCC_PREPROCESSOR_DEFINITIONS
 gcc_parts = [
     'kDriver_Name=' + repr(driver_name),
     'kPlugIn_BundleID=' + repr(bundle_id),
@@ -62,11 +60,10 @@ result = subprocess.run(cmd, capture_output=False)
 sys.exit(result.returncode)
 PYEOF
 
-# Replace placeholders
-sed -i "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
-sed -i "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
-sed -i "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
-sed -i "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
+sed -i '' "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
+sed -i '' "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
+sed -i '' "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
+sed -i '' "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
 
 echo "Running xcodebuild via Python..."
 python3 /tmp/build_driver.py
