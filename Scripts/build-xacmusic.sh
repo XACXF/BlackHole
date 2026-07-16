@@ -3,9 +3,9 @@ set -e
 
 DRIVER_NAME="${DRIVER_NAME:-XACmusic}"
 BUNDLE_ID="${BUNDLE_ID:-audio.xac.XACmusic}"
-DEVICE_NAME="${DEVICE_NAME:-XACmusic}"
 CHANNELS="${CHANNELS:-2}"
 PKG_NAME="${PKG_NAME:-XACmusic}"
+TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
 
 echo "============================================"
 echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
@@ -15,10 +15,11 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Modify BlackHole.c defaults directly
+# Modify BlackHole.c defaults
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
 sed -i '' "s/\"com.apple.audio.BlackHoleSoundCard\"/\"${BUNDLE_ID}\"/g" BlackHole/BlackHole.c
 
+# Build
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
@@ -31,20 +32,18 @@ xcodebuild -project BlackHole.xcodeproj \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
 
-# Find driver in build/Symbols/Release/ (where xcodebuild puts the final product)
-DRIVER_PATH=$(find build/Symbols/Release -name "*.driver" | head -1)
-if [ -z "$DRIVER_PATH" ]; then
-    echo "ERROR: Driver build failed!"
-    ls -laR build/ 2>/dev/null | head -50
+DRIVER_DIR="build/Symbols/Release/${TARGET_NAME}"
+if [ ! -d "$DRIVER_DIR" ]; then
+    echo "ERROR: Driver not found at $DRIVER_DIR"
+    ls -laR build/Symbols/Release/ 2>/dev/null || echo "build/Symbols/Release not found"
     exit 1
 fi
 
-TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
-mv "$DRIVER_PATH" "build/Symbols/Release/${TARGET_NAME}"
+echo "Driver found at $DRIVER_DIR"
 
 rm -rf "Scripts/${PKG_NAME}"
 mkdir -p "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL"
-cp -R "build/Symbols/Release/${TARGET_NAME}" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
+cp -R "$DRIVER_DIR" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
 
 mkdir -p "Scripts/${PKG_NAME}/Scripts"
 cat > "Scripts/${PKG_NAME}/Scripts/postinstall" << 'POSTINSTALL'
@@ -64,4 +63,5 @@ pkgbuild \
 echo ""
 echo "============================================"
 echo "${PKG_NAME}.pkg created!"
+ls -lh "Scripts/${PKG_NAME}.pkg"
 echo "============================================"
