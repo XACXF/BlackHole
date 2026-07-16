@@ -19,7 +19,7 @@ jobs:
         run: cmake -B VST/build -S VST -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
       - name: Build
-        run: cmake --build VST/build --config Release --parallel
+        run: cmake --build VST/build --config Release -j 2
 
       - name: Stage and package into single pkg
         run: |
