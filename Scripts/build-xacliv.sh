@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 set -e
 
 DRIVER_NAME="${DRIVER_NAME:-XACliv}"
@@ -13,7 +13,7 @@ echo "============================================"
 
 rm -rf build
 rm -rf "dist/${PKG_NAME}"
-rm -rf "dist/${PKG_NAME}.dmg"
+rm -rf "dist/${PKG_NAME}.pkg"
 
 # Modify BlackHole.c defaults
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
@@ -40,167 +40,39 @@ fi
 
 echo "Driver built: $DRIVER_DIR"
 
-# Stage DMG contents
-INSTALLER_DIR="dist/${PKG_NAME}-Installer"
-rm -rf "$INSTALLER_DIR"
-mkdir -p "$INSTALLER_DIR"
+echo "Driver built: $DRIVER_DIR"
 
-# Copy driver bundle
-cp -R "$DRIVER_DIR" "$INSTALLER_DIR/"
+# Package as a flat component .pkg (compatible with macOS 12 through macOS 26)
+PKG_PATH="dist/${PKG_NAME}.pkg"
+rm -f "$PKG_PATH"
 
-# Write install.sh
-cat > "$INSTALLER_DIR/install.sh" << 'INSTALL_EOF'
+# Post-install script: reload coreaudiod so the new device appears
+SCRIPTS_DIR="build/pkg_scripts_${PKG_NAME}"
+rm -rf "$SCRIPTS_DIR"
+mkdir -p "$SCRIPTS_DIR"
+cat > "$SCRIPTS_DIR/postinstall" << 'POST_EOF'
 #!/bin/bash
-# BlackHole-derived audio driver installer
-# Usage: sudo ./install.sh
-
-set -e
-
-DRIVER_NAME="$1"
-if [ -z "$DRIVER_NAME" ]; then
-    # Auto-detect the .driver bundle in current directory
-    DRIVER_NAME=$(ls -d *.driver 2>/dev/null | head -1)
-    if [ -z "$DRIVER_NAME" ]; then
-        echo "ERROR: No .driver bundle found in current directory"
-        echo "Usage: sudo ./install.sh <DriverName.driver>"
-        exit 1
-    fi
-fi
-
-if [ ! -d "$DRIVER_NAME" ]; then
-    echo "ERROR: $DRIVER_NAME not found"
-    exit 1
-fi
-
-if [ "$EUID" -ne 0 ]; then
-    echo "ERROR: This installer requires root privileges."
-    echo "Please run: sudo ./install.sh"
-    exit 1
-fi
-
-DEST="/Library/Audio/Plug-Ins/HAL"
-echo "Installing $DRIVER_NAME to $DEST ..."
-
-if [ -d "$DEST/$DRIVER_NAME" ]; then
-    echo "  - Removing existing $DRIVER_NAME ..."
-    rm -rf "$DEST/$DRIVER_NAME"
-fi
-
-cp -R "$DRIVER_NAME" "$DEST/"
-echo "  - Copied driver bundle"
-
-# Set proper ownership and permissions
-chown -R root:wheel "$DEST/$DRIVER_NAME"
-chmod -R 755 "$DEST/$DRIVER_NAME"
-
-# Restart coreaudiod to load the new driver
-echo "  - Restarting coreaudiod ..."
 killall -9 coreaudiod 2>/dev/null || true
-sleep 2
+exit 0
+POST_EOF
+chmod +x "$SCRIPTS_DIR/postinstall"
 
 echo ""
-echo "============================================"
-echo "Installation complete!"
-echo "Driver: $DRIVER_NAME"
-echo "Location: $DEST/$DRIVER_NAME"
-echo ""
-echo "Open 'Audio MIDI Setup' to verify the new device."
-echo "============================================"
-INSTALL_EOF
-chmod +x "$INSTALLER_DIR/install.sh"
+echo "Creating .pkg (flat, macOS 12+ compatible) ..."
+pkgbuild --identifier "${BUNDLE_ID}" \
+  --version "1.0.0" \
+  --install-location "/Library/Audio/Plug-Ins/HAL" \
+  --component "$DRIVER_DIR" \
+  --scripts "$SCRIPTS_DIR" \
+  "$PKG_PATH"
 
-# Write uninstall.sh
-cat > "$INSTALLER_DIR/uninstall.sh" << 'UNINSTALL_EOF'
-#!/bin/bash
-# Uninstaller for BlackHole-derived audio driver
-# Usage: sudo ./uninstall.sh
-
-set -e
-
-DRIVER_NAME="$1"
-if [ -z "$DRIVER_NAME" ]; then
-    DRIVER_NAME=$(ls -d *.driver 2>/dev/null | head -1)
-    if [ -z "$DRIVER_NAME" ]; then
-        echo "ERROR: No .driver bundle found"
-        exit 1
-    fi
-fi
-
-if [ "$EUID" -ne 0 ]; then
-    echo "ERROR: Please run: sudo ./uninstall.sh"
-    exit 1
-fi
-
-DEST="/Library/Audio/Plug-Ins/HAL"
-if [ -d "$DEST/$DRIVER_NAME" ]; then
-    echo "Removing $DEST/$DRIVER_NAME ..."
-    rm -rf "$DEST/$DRIVER_NAME"
-    killall -9 coreaudiod 2>/dev/null || true
-    sleep 1
-    echo "Uninstall complete."
-else
-    echo "$DRIVER_NAME is not installed."
-fi
-UNINSTALL_EOF
-chmod +x "$INSTALLER_DIR/uninstall.sh"
-
-# Write README
-cat > "$INSTALLER_DIR/README.txt" << README_EOF
-${PKG_NAME} Audio Driver Installer
-================================
-
-This is a custom audio driver derived from ExistentialAudio/BlackHole.
-
-INSTALLATION
-------------
-Method 1 (Recommended - terminal):
-  1. Open Terminal
-  2. cd to this folder
-  3. Run: sudo ./install.sh
-  4. Wait for "Installation complete!"
-
-Method 2 (Manual drag-and-drop):
-  1. Open Finder
-  2. Press Cmd+Shift+G and type: /Library/Audio/Plug-Ins/HAL/
-  3. Drag ${TARGET_NAME} into that folder (provide admin password)
-  4. Open Terminal and run: sudo killall -9 coreaudiod
-
-VERIFICATION
-------------
-- Open "Audio MIDI Setup" (in /Applications/Utilities/)
-- Look for "${DRIVER_NAME}" in the device list on the left
-- If you don't see it, restart your Mac
-
-UNINSTALLATION
---------------
-  sudo ./uninstall.sh
-
-Or manually:
-  1. Delete ${TARGET_NAME} from /Library/Audio/Plug-Ins/HAL/
-  2. Run: sudo killall -9 coreaudiod
-
-Built automatically by GitHub Actions.
-README_EOF
-
-# Create DMG
-echo ""
-echo "Creating DMG ..."
-DMG_PATH="dist/${PKG_NAME}.dmg"
-DMG_TEMP="dist/${PKG_NAME}-temp.dmg"
-
-# Create a read-only DMG
-hdiutil create -volname "${PKG_NAME} Installer" \
-    -srcfolder "$INSTALLER_DIR" \
-    -ov -format UDZO \
-    "$DMG_PATH"
-
-if [ -f "$DMG_PATH" ]; then
+if [ -f "$PKG_PATH" ]; then
     echo ""
     echo "============================================"
-    echo "${PKG_NAME}.dmg created!"
-    ls -lh "$DMG_PATH"
+    echo "${PKG_NAME}.pkg created!"
+    ls -lh "$PKG_PATH"
     echo "============================================"
 else
-    echo "ERROR: DMG was not created"
+    echo "ERROR: .pkg was not created"
     exit 1
 fi
