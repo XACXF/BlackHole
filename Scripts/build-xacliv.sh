@@ -12,6 +12,7 @@ echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
 echo "============================================"
 
 rm -rf build
+rm -rf "Scripts/${PKG_NAME}-component.pkg"
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
@@ -33,11 +34,10 @@ xcodebuild -project BlackHole.xcodeproj \
 DRIVER_DIR="build/Symbols/Release/${TARGET_NAME}"
 if [ ! -d "$DRIVER_DIR" ]; then
     echo "ERROR: Driver not found at $DRIVER_DIR"
-    ls -laR build/Symbols/Release/ 2>/dev/null || echo "build/Symbols/Release not found"
     exit 1
 fi
 
-echo "Driver found at $DRIVER_DIR"
+echo "Driver built: $DRIVER_DIR"
 
 rm -rf "Scripts/${PKG_NAME}"
 mkdir -p "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL"
@@ -51,11 +51,15 @@ POSTINSTALL
 chmod +x "Scripts/${PKG_NAME}/Scripts/postinstall"
 
 pkgbuild \
+  --root "Scripts/${PKG_NAME}" \
   --identifier audio.xac.${PKG_NAME} \
   --version 1.0.0 \
-  --root "Scripts/${PKG_NAME}" \
-  --scripts "Scripts/${PKG_NAME}/Scripts" \
   --install-location "/" \
+  --scripts "Scripts/${PKG_NAME}/Scripts" \
+  "Scripts/${PKG_NAME}-component.pkg"
+
+productbuild \
+  --package "Scripts/${PKG_NAME}-component.pkg" \
   "Scripts/${PKG_NAME}.pkg"
 
 echo ""
