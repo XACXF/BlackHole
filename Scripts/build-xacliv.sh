@@ -15,6 +15,10 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
+export GCC_PREPROCESSOR_DEFINITIONS="kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\""
+
+echo "DEBUG MACRO: $GCC_PREPROCESSOR_DEFINITIONS"
+
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
@@ -22,7 +26,7 @@ xcodebuild -project BlackHole.xcodeproj \
   CODE_SIGN_IDENTITY="" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  GCC_PREPROCESSOR_DEFINITIONS="$GCC_PREPROCESSOR_DEFINITIONS kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"" \
+  GCC_PREPROCESSOR_DEFINITIONS="$GCC_PREPROCESSOR_DEFINITIONS" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
