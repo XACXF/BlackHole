@@ -28,7 +28,7 @@ jobs:
       - name: Build XACmusic Driver
         run: bash Scripts/build-xacmusic.sh
 
-      - name: Upload XACmusic pkg
+      - name: Upload XACmusic dmg
         uses: actions/upload-artifact@v4
         with:
           name: XACmusic-pkg
@@ -55,7 +55,7 @@ jobs:
       - name: Build XACliv Driver
         run: bash Scripts/build-xacliv.sh
 
-      - name: Upload XACliv pkg
+      - name: Upload XACliv dmg
         uses: actions/upload-artifact@v4
         with:
           name: XACliv-pkg
