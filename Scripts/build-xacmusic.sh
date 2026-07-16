@@ -11,16 +11,18 @@ echo "============================================"
 echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
 echo "============================================"
 
-# Clean
 rm -rf build
 rm -rf Scripts/${PKG_NAME}.pkg
 rm -rf Scripts/${PKG_NAME}
 
-# Build from repo root
+# CODE_SIGN_IDENTITY="" = 禁用签名
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
   PRODUCT_BUNDLE_IDENTIFIER=${BUNDLE_ID} \
+  CODE_SIGN_IDENTITY="" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO \
   GCC_PREPROCESSOR_DEFINITIONS="$GCC_PREPROCESSOR_DEFINITIONS kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
@@ -35,7 +37,6 @@ fi
 TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
 mv "$DRIVER_PATH" "build/Archive/${TARGET_NAME}"
 
-# Create package
 rm -rf Scripts/${PKG_NAME}
 mkdir -p Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL
 cp -R "build/Archive/${TARGET_NAME}" Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/
