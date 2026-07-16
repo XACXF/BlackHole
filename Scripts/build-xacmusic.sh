@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 set -e
 
 DRIVER_NAME="${DRIVER_NAME:-XACmusic}"
@@ -45,6 +45,7 @@ echo "Driver built: $DRIVER_DIR"
 # Package as a flat component .pkg (compatible with macOS 12 through macOS 26)
 PKG_PATH="dist/${PKG_NAME}.pkg"
 rm -f "$PKG_PATH"
+mkdir -p "$(dirname "$PKG_PATH")"
 
 # Post-install script: reload coreaudiod so the new device appears
 SCRIPTS_DIR="build/pkg_scripts_${PKG_NAME}"
