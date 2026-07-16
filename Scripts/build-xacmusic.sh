@@ -12,6 +12,7 @@ echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
 echo "============================================"
 
 rm -rf build
+rm -rf "Scripts/${PKG_NAME}-component.pkg"
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
@@ -19,7 +20,7 @@ rm -rf "Scripts/${PKG_NAME}"
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
 sed -i '' "s/\"com.apple.audio.BlackHoleSoundCard\"/\"${BUNDLE_ID}\"/g" BlackHole/BlackHole.c
 
-# Build
+# Build the driver
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
@@ -35,12 +36,12 @@ xcodebuild -project BlackHole.xcodeproj \
 DRIVER_DIR="build/Symbols/Release/${TARGET_NAME}"
 if [ ! -d "$DRIVER_DIR" ]; then
     echo "ERROR: Driver not found at $DRIVER_DIR"
-    ls -laR build/Symbols/Release/ 2>/dev/null || echo "build/Symbols/Release not found"
     exit 1
 fi
 
-echo "Driver found at $DRIVER_DIR"
+echo "Driver built: $DRIVER_DIR"
 
+# Stage the package root
 rm -rf "Scripts/${PKG_NAME}"
 mkdir -p "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL"
 cp -R "$DRIVER_DIR" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
@@ -52,12 +53,19 @@ killall -9 coreaudiod 2>/dev/null || true
 POSTINSTALL
 chmod +x "Scripts/${PKG_NAME}/Scripts/postinstall"
 
+# Step 1: Build a component package with pkgbuild
 pkgbuild \
+  --root "Scripts/${PKG_NAME}" \
   --identifier audio.xac.${PKG_NAME} \
   --version 1.0.0 \
-  --root "Scripts/${PKG_NAME}" \
-  --scripts "Scripts/${PKG_NAME}/Scripts" \
   --install-location "/" \
+  --scripts "Scripts/${PKG_NAME}/Scripts" \
+  "Scripts/${PKG_NAME}-component.pkg"
+
+# Step 2: Wrap it in a distribution package with productbuild
+# This produces a .pkg that macOS Installer.app can open and display
+productbuild \
+  --package "Scripts/${PKG_NAME}-component.pkg" \
   "Scripts/${PKG_NAME}.pkg"
 
 echo ""
