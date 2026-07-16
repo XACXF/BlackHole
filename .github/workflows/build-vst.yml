@@ -1,0 +1,41 @@
+name: Build XAC VST3
+
+on:
+  push:
+    paths:
+      - 'VST/**'
+      - '.github/workflows/build-vst.yml'
+  workflow_dispatch:
+
+jobs:
+  build-vst:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B VST/build -S VST -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+
+      - name: Build
+        run: cmake --build VST/build --config Release --parallel
+
+      - name: Stage and package into single pkg
+        run: |
+          set -e
+          mkdir -p stage/Library/Audio/Plug-Ins/VST3 dist
+          cp -R "VST/build/XAClive_artefacts/Release/VST3/XAClive.vst3" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "VST/build/XACmusic_artefacts/Release/VST3/XACmusic.vst3" stage/Library/Audio/Plug-Ins/VST3/
+          pkgbuild --root stage \
+                   --identifier audio.xac.XACVST \
+                   --version 1.0.0 \
+                   --install-location / \
+                   dist/XACVST.pkg
+          ls -lh dist
+
+      - name: Upload pkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: XACVST-pkg
+          path: dist/XACVST.pkg
