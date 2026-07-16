@@ -15,17 +15,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Ninja
-        run: brew install ninja
+      - name: Configure (Unix Makefiles, x86_64)
+        run: cmake -B VST/build -S VST -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
-      - name: Configure (Ninja)
-        run: cmake -B VST/build -S VST -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
-
-      - name: Build plugin 1: XAClive
-        run: cmake --build VST/build --target XAClive -j 2
-
-      - name: Build plugin 2: XACmusic
-        run: cmake --build VST/build --target XACmusic -j 2
+      - name: Build all targets
+        run: cmake --build VST/build --config Release -- -j2
 
       - name: Stage and package into single pkg
         run: |
