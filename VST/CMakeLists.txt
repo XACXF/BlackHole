@@ -8,7 +8,8 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "" FORCE)
 
 include(FetchContent)
 FetchContent_Declare(juce
-    URL https://github.com/juce-framework/JUCE/archive/refs/tags/8.0.14.zip)
+    URL https://github.com/juce-framework/JUCE/archive/refs/tags/8.0.14.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(juce)
 
 set(SOURCES
