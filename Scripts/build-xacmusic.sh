@@ -15,70 +15,45 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-cat > /tmp/build_driver.py << PYEOF
-import subprocess
-import sys
-import shlex
+# Generate xcconfig with quoted GCC_PREPROCESSOR_DEFINITIONS
+cat > /tmp/BlackHole-custom.xcconfig << XCEOF
+PRODUCT_BUNDLE_IDENTIFIER=${BUNDLE_ID}
+CODE_SIGNING_REQUIRED=NO
+CODE_SIGNING_ALLOWED=NO
+GCC_PREPROCESSOR_DEFINITIONS = kDriver_Name="\\"${DRIVER_NAME}\\"" kPlugIn_BundleID="\\"${BUNDLE_ID}\\"" kDevice_Name="\\"${DEVICE_NAME}\\"" kDevice2_Name="\\"${DEVICE_NAME}\\"" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden="\\"FALSE\\"" kDevice_HasInput="\\"TRUE\\"" kDevice_HasOutput="\\"TRUE\\"" kDevice2_IsHidden="\\"FALSE\\"" kDevice2_HasInput="\\"FALSE\\"" kDevice2_HasOutput="\\"FALSE\\""
+XCEOF
 
-driver_name = """DRIVER_NAME_PLACEHOLDER"""
-bundle_id = """BUNDLE_ID_PLACEHOLDER"""
-device_name = """DEVICE_NAME_PLACEHOLDER"""
-channels = """CHANNELS_PLACEHOLDER"""
+echo "xcconfig content:"
+cat /tmp/BlackHole-custom.xcconfig
 
-# Write GCC macros to a file (using @file to bypass = delimiter parsing)
-lines = [
-    "kDriver_Name=" + repr(driver_name),
-    "kPlugIn_BundleID=" + repr(bundle_id),
-    "kDevice_Name=" + repr(device_name),
-    "kDevice2_Name=" + repr(device_name),
-    "kNumber_Of_Channels=" + channels,
-    "kLatency_Frame_Size=128",
-    "kDevice_IsHidden=" + repr("FALSE"),
-    "kDevice_HasInput=" + repr("TRUE"),
-    "kDevice_HasOutput=" + repr("TRUE"),
-    "kDevice2_IsHidden=" + repr("FALSE"),
-    "kDevice2_HasInput=" + repr("FALSE"),
-    "kDevice2_HasOutput=" + repr("FALSE"),
-]
+# Also write individual -D args to a file (shell will read it)
+cat > /tmp/gcc_flags.txt << CFGEOF
+-DkDriver_Name="${DRIVER_NAME}"
+-DkPlugIn_BundleID="${BUNDLE_ID}"
+-DkDevice_Name="${DEVICE_NAME}"
+-DkDevice2_Name="${DEVICE_NAME}"
+-DkNumber_Of_Channels=${CHANNELS}
+-DkLatency_Frame_Size=128
+-DkDevice_IsHidden="FALSE"
+-DkDevice_HasInput="TRUE"
+-DkDevice_HasOutput="TRUE"
+-DkDevice2_IsHidden="FALSE"
+-DkDevice2_HasInput="FALSE"
+-DkDevice2_HasOutput="FALSE"
+CFGEOF
 
-# Each line becomes: -Dname=value
-# Using @file (all -D flags in a file) to avoid shell splitting
-with open('/tmp/gcc_defs.txt', 'w') as f:
-    for line in lines:
-        f.write('-D' + line + '\n')
+echo ""
+echo "gcc_flags:"
+cat /tmp/gcc_flags.txt
 
-print("Written /tmp/gcc_defs.txt:")
-with open('/tmp/gcc_defs.txt') as f:
-    print(f.read())
-
-cmd = [
-    'xcodebuild',
-    '-project', 'BlackHole.xcodeproj',
-    '-configuration', 'Release',
-    '-target', 'BlackHole',
-    'PRODUCT_BUNDLE_IDENTIFIER=' + bundle_id,
-    'CODE_SIGNING_REQUIRED=NO',
-    'CODE_SIGNING_ALLOWED=NO',
-    '-jobs=1',
-    'OBJROOT=build/Objects',
-    'SYMROOT=build/Symbols',
-    'DSTROOT=build/Archive',
-]
-
-# Append @/tmp/gcc_defs.txt to read -D flags from file
-cmd.append('@/tmp/gcc_defs.txt')
-
-result = subprocess.run(cmd, capture_output=False)
-sys.exit(result.returncode)
-PYEOF
-
-sed -i '' "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
-sed -i '' "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
-sed -i '' "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
-sed -i '' "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
-
-echo "Running xcodebuild via Python..."
-python3 /tmp/build_driver.py
+# Run xcodebuild using xcconfig
+xcodebuild -project BlackHole.xcodeproj \
+  -xcconfig /tmp/BlackHole-custom.xcconfig \
+  -configuration Release \
+  -target BlackHole \
+  OBJROOT=build/Objects \
+  SYMROOT=build/Symbols \
+  DSTROOT=build/Archive 2>&1
 
 DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
