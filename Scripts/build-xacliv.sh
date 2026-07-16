@@ -15,24 +15,14 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-printf '%s\n' '#!/bin/bash' \
-  'xcodebuild -project BlackHole.xcodeproj \' \
-  '  -configuration Release \' \
-  '  -target BlackHole \' \
-  "  PRODUCT_BUNDLE_IDENTIFIER=\"${BUNDLE_ID}\" \'" \
-  '  CODE_SIGN_IDENTITY="" \' \
-  '  CODE_SIGNING_REQUIRED=NO \' \
-  '  CODE_SIGNING_ALLOWED=NO \' \
-  "  GCC_PREPROCESSOR_DEFINITIONS=\"kDriver_Name=\\\"${DRIVER_NAME}\\\" kPlugIn_BundleID=\\\"${BUNDLE_ID}\\\" kDevice_Name=\\\"${DEVICE_NAME}\\\" kDevice2_Name=\\\"${DEVICE_NAME}\\\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\\\"FALSE\\\" kDevice_HasInput=\\\"TRUE\\\" kDevice_HasOutput=\\\"TRUE\\\" kDevice2_IsHidden=\\\"FALSE\\\" kDevice2_HasInput=\\\"FALSE\\\" kDevice2_HasOutput=\\\"FALSE\\\"\" \'" \
-  '  OBJROOT=build/Objects \' \
-  '  SYMROOT=build/Symbols \' \
-  '  DSTROOT=build/Archive 2>&1' \
-  > /tmp/build_driver.sh
+cat > /tmp/xcode_build.sh << ENDOFSCRIPT
+#!/bin/bash
+xcodebuild -project BlackHole.xcodeproj -configuration Release -target BlackHole PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO GCC_PREPROCESSOR_DEFINITIONS="kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"" OBJROOT=build/Objects SYMROOT=build/Symbols DSTROOT=build/Archive 2>&1
+ENDOFSCRIPT
 
-chmod +x /tmp/build_driver.sh
-
+chmod +x /tmp/xcode_build.sh
 echo "Running xcodebuild..."
-bash /tmp/build_driver.sh
+bash /tmp/xcode_build.sh
 
 DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
