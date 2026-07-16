@@ -11,15 +11,17 @@ echo "============================================"
 echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
 echo "============================================"
 
+# Clean
 rm -rf build
 rm -rf Scripts/${PKG_NAME}.pkg
 rm -rf Scripts/${PKG_NAME}
 
+# Build from repo root
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
   PRODUCT_BUNDLE_IDENTIFIER=${BUNDLE_ID} \
-  GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS kDriver_Name=\"'${DRIVER_NAME}'\" kPlugIn_BundleID=\"'${BUNDLE_ID}'\" kDevice_Name=\"'${DEVICE_NAME}'\" kDevice2_Name=\"'${DEVICE_NAME}'\" kNumber_Of_Channels='${CHANNELS}' kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"' \
+  GCC_PREPROCESSOR_DEFINITIONS="$GCC_PREPROCESSOR_DEFINITIONS kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
@@ -33,6 +35,7 @@ fi
 TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
 mv "$DRIVER_PATH" "build/Archive/${TARGET_NAME}"
 
+# Create package
 rm -rf Scripts/${PKG_NAME}
 mkdir -p Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL
 cp -R "build/Archive/${TARGET_NAME}" Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/
@@ -59,5 +62,5 @@ pkgbuild \
 
 echo ""
 echo "============================================"
-echo "✅ XACliv.pkg 创建成功!"
+echo "XACliv.pkg created!"
 echo "============================================"
