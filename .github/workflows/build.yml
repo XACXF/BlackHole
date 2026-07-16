@@ -31,8 +31,8 @@ jobs:
       - name: Upload XACmusic dmg
         uses: actions/upload-artifact@v4
         with:
-          name: XACmusic-pkg
-          path: Scripts/XACmusic.pkg
+          name: XACmusic-dmg
+          path: dist/XACmusic.dmg
           retention-days: 30
 
   build-xacliv:
@@ -58,6 +58,6 @@ jobs:
       - name: Upload XACliv dmg
         uses: actions/upload-artifact@v4
         with:
-          name: XACliv-pkg
-          path: Scripts/XACliv.pkg
+          name: XACliv-dmg
+          path: dist/XACliv.dmg
           retention-days: 30
