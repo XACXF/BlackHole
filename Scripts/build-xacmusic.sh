@@ -15,18 +15,18 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-# Modify BlackHole.c defaults directly using sed
+# Modify BlackHole.c defaults directly
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
 sed -i '' "s/\"com.apple.audio.BlackHoleSoundCard\"/\"${BUNDLE_ID}\"/g" BlackHole/BlackHole.c
-sed -i '' "s/\"BlackHole\"/\"${DEVICE_NAME}\"/g" BlackHole/BlackHole.c
 
 xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
   PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
+  PRODUCT_NAME="${DRIVER_NAME}${CHANNELS}ch" \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  GCC_PREPROCESSOR_DEFINITIONS="kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice_HasInput=1 kDevice2_HasInput=0 kDevice2_HasOutput=0" \
+  GCC_PREPROCESSOR_DEFINITIONS="kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_HasInput=0 kDevice2_HasOutput=0" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
@@ -34,6 +34,8 @@ xcodebuild -project BlackHole.xcodeproj \
 DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
     echo "ERROR: Driver build failed!"
+    ls -la build/Archive/ 2>/dev/null || true
+    ls -la build/Symbols/Release/ 2>/dev/null || true
     exit 1
 fi
 
