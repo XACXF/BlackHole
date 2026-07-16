@@ -24,23 +24,28 @@ bundle_id = """BUNDLE_ID_PLACEHOLDER"""
 device_name = """DEVICE_NAME_PLACEHOLDER"""
 channels = """CHANNELS_PLACEHOLDER"""
 
-gcc_parts = [
-    'kDriver_Name=' + repr(driver_name),
-    'kPlugIn_BundleID=' + repr(bundle_id),
-    'kDevice_Name=' + repr(device_name),
-    'kDevice2_Name=' + repr(device_name),
-    'kNumber_Of_Channels=' + repr(channels).replace("'",""),
-    'kLatency_Frame_Size=128',
-    'kDevice_IsHidden=' + repr('FALSE'),
-    'kDevice_HasInput=' + repr('TRUE'),
-    'kDevice_HasOutput=' + repr('TRUE'),
-    'kDevice2_IsHidden=' + repr('FALSE'),
-    'kDevice2_HasInput=' + repr('FALSE'),
-    'kDevice2_HasOutput=' + repr('FALSE'),
+lines = [
+    "kDriver_Name=" + repr(driver_name),
+    "kPlugIn_BundleID=" + repr(bundle_id),
+    "kDevice_Name=" + repr(device_name),
+    "kDevice2_Name=" + repr(device_name),
+    "kNumber_Of_Channels=" + channels,
+    "kLatency_Frame_Size=128",
+    "kDevice_IsHidden=" + repr("FALSE"),
+    "kDevice_HasInput=" + repr("TRUE"),
+    "kDevice_HasOutput=" + repr("TRUE"),
+    "kDevice2_IsHidden=" + repr("FALSE"),
+    "kDevice2_HasInput=" + repr("FALSE"),
+    "kDevice2_HasOutput=" + repr("FALSE"),
 ]
 
-gcc_def = ' '.join(gcc_parts)
-print("GCC_DEF:", repr(gcc_def))
+with open('/tmp/gcc_defs.txt', 'w') as f:
+    for line in lines:
+        f.write('-D' + line + '\n')
+
+print("Written /tmp/gcc_defs.txt:")
+with open('/tmp/gcc_defs.txt') as f:
+    print(f.read())
 
 cmd = [
     'xcodebuild',
@@ -50,11 +55,13 @@ cmd = [
     'PRODUCT_BUNDLE_IDENTIFIER=' + bundle_id,
     'CODE_SIGNING_REQUIRED=NO',
     'CODE_SIGNING_ALLOWED=NO',
-    'GCC_PREPROCESSOR_DEFINITIONS=' + gcc_def,
+    '-jobs=1',
     'OBJROOT=build/Objects',
     'SYMROOT=build/Symbols',
     'DSTROOT=build/Archive',
 ]
+
+cmd.append('@/tmp/gcc_defs.txt')
 
 result = subprocess.run(cmd, capture_output=False)
 sys.exit(result.returncode)
