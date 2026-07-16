@@ -1,0 +1,51 @@
+name: Build XAC Audio Drivers
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-xacmusic:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build XACmusic Driver
+        run: |
+          cd Scripts
+          chmod +x build-xacmusic.sh
+          ./build-xacmusic.sh
+
+      - name: Upload XACmusic pkg
+        uses: actions/upload-artifact@v4
+        with:
+          name: XACmusic-pkg
+          path: Scripts/XACmusic.pkg
+          retention-days: 30
+
+  build-xacliv:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build XACliv Driver
+        run: |
+          cd Scripts
+          chmod +x build-xacliv.sh
+          ./build-xacliv.sh
+
+      - name: Upload XACliv pkg
+        uses: actions/upload-artifact@v4
+        with:
+          name: XACliv-pkg
+          path: Scripts/XACliv.pkg
+          retention-days: 30
