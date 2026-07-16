@@ -30,20 +30,19 @@ xcodebuild -project BlackHole.xcodeproj \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
 
-DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
+DRIVER_PATH=$(find build/Symbols/Release -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
     echo "ERROR: Driver build failed!"
-    ls -la build/Archive/ 2>/dev/null || true
-    ls -la build/Symbols/Release/ 2>/dev/null || true
+    ls -laR build/ 2>/dev/null | head -50
     exit 1
 fi
 
 TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
-mv "$DRIVER_PATH" "build/Archive/${TARGET_NAME}"
+mv "$DRIVER_PATH" "build/Symbols/Release/${TARGET_NAME}"
 
 rm -rf "Scripts/${PKG_NAME}"
 mkdir -p "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL"
-cp -R "build/Archive/${TARGET_NAME}" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
+cp -R "build/Symbols/Release/${TARGET_NAME}" "Scripts/${PKG_NAME}/Library/Audio/Plug-Ins/HAL/"
 
 mkdir -p "Scripts/${PKG_NAME}/Scripts"
 cat > "Scripts/${PKG_NAME}/Scripts/postinstall" << 'POSTINSTALL'
