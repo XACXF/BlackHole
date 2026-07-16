@@ -16,16 +16,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure
+      - name: Configure with Xcode
         run: |
-          cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
-          cmake --build build --target help 2>&1 | head -50
+          cmake -B build -S . -G "Xcode" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+          echo "=== Available targets ==="
+          cmake --build build --target help | grep -i -E "(xac|vst|live|music)"
 
       - name: Build XAClive
-        run: cmake --build build --target XAClive --config Release -- -j2 2>&1 | tail -30
+        run: cmake --build build --target XAClive --config Release -j 2
 
       - name: Build XACmusic
-        run: cmake --build build --target XACmusic --config Release -- -j2 2>&1 | tail -30
+        run: cmake --build build --target XACmusic --config Release -j 2
 
       - name: Stage and package
         run: |
