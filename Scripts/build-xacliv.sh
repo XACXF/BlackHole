@@ -60,10 +60,10 @@ result = subprocess.run(cmd, capture_output=False)
 sys.exit(result.returncode)
 PYEOF
 
-sed -i "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
-sed -i "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
-sed -i "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
-sed -i "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
+sed -i '' "s/DRIVER_NAME_PLACEHOLDER/${DRIVER_NAME}/" /tmp/build_driver.py
+sed -i '' "s/BUNDLE_ID_PLACEHOLDER/${BUNDLE_ID}/" /tmp/build_driver.py
+sed -i '' "s/DEVICE_NAME_PLACEHOLDER/${DEVICE_NAME}/" /tmp/build_driver.py
+sed -i '' "s/CHANNELS_PLACEHOLDER/${CHANNELS}/" /tmp/build_driver.py
 
 echo "Running xcodebuild via Python..."
 python3 /tmp/build_driver.py
