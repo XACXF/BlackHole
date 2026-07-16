@@ -15,14 +15,41 @@ rm -rf build
 rm -rf "Scripts/${PKG_NAME}.pkg"
 rm -rf "Scripts/${PKG_NAME}"
 
-cat > /tmp/xcode_build.sh << ENDOFSCRIPT
-#!/bin/bash
-xcodebuild -project BlackHole.xcodeproj -configuration Release -target BlackHole PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO GCC_PREPROCESSOR_DEFINITIONS="kDriver_Name=\"${DRIVER_NAME}\" kPlugIn_BundleID=\"${BUNDLE_ID}\" kDevice_Name=\"${DEVICE_NAME}\" kDevice2_Name=\"${DEVICE_NAME}\" kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_IsHidden=\"FALSE\" kDevice_HasInput=\"TRUE\" kDevice_HasOutput=\"TRUE\" kDevice2_IsHidden=\"FALSE\" kDevice2_HasInput=\"FALSE\" kDevice2_HasOutput=\"FALSE\"" OBJROOT=build/Objects SYMROOT=build/Symbols DSTROOT=build/Archive 2>&1
-ENDOFSCRIPT
+GCC_DEF=$(python3 -c "
+import json
+driver_name = '''${DRIVER_NAME}'''
+bundle_id = '''${BUNDLE_ID}'''
+device_name = '''${DEVICE_NAME}'''
+channels = '''${CHANNELS}'''
+parts = [
+    'kDriver_Name=' + json.dumps(driver_name)[1:-1],
+    'kPlugIn_BundleID=' + json.dumps(bundle_id)[1:-1],
+    'kDevice_Name=' + json.dumps(device_name)[1:-1],
+    'kDevice2_Name=' + json.dumps(device_name)[1:-1],
+    'kNumber_Of_Channels=' + channels,
+    'kLatency_Frame_Size=128',
+    'kDevice_IsHidden=' + json.dumps('FALSE')[1:-1],
+    'kDevice_HasInput=' + json.dumps('TRUE')[1:-1],
+    'kDevice_HasOutput=' + json.dumps('TRUE')[1:-1],
+    'kDevice2_IsHidden=' + json.dumps('FALSE')[1:-1],
+    'kDevice2_HasInput=' + json.dumps('FALSE')[1:-1],
+    'kDevice2_HasOutput=' + json.dumps('FALSE')[1:-1],
+]
+print('GCC_PREPROCESSOR_DEFINITIONS=' + json.dumps(' '.join(parts)))
+")
 
-chmod +x /tmp/xcode_build.sh
-echo "Running xcodebuild..."
-bash /tmp/xcode_build.sh
+echo "DEBUG GCC: $GCC_DEF"
+
+xcodebuild -project BlackHole.xcodeproj \
+  -configuration Release \
+  -target BlackHole \
+  PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
+  CODE_SIGNING_REQUIRED=NO \
+  CODE_SIGNING_ALLOWED=NO \
+  "${GCC_DEF}" \
+  OBJROOT=build/Objects \
+  SYMROOT=build/Symbols \
+  DSTROOT=build/Archive 2>&1
 
 DRIVER_PATH=$(find build/Archive -name "*.driver" | head -1)
 if [ -z "$DRIVER_PATH" ]; then
