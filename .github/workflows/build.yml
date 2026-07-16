@@ -12,6 +12,13 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     
+    env:
+      DRIVER_NAME: XACmusic
+      BUNDLE_ID: audio.xac.XACmusic
+      DEVICE_NAME: XACmusic
+      CHANNELS: "2"
+      PKG_NAME: XACmusic
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,6 +38,13 @@ jobs:
   build-xacliv:
     runs-on: macos-latest
     timeout-minutes: 30
+    
+    env:
+      DRIVER_NAME: XACliv
+      BUNDLE_ID: audio.xac.XACliv
+      DEVICE_NAME: XACliv
+      CHANNELS: "2"
+      PKG_NAME: XACliv
     
     steps:
       - name: Checkout code
