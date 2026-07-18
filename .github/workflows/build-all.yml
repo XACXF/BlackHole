@@ -1,0 +1,95 @@
+name: Build XAC Audio Suite (Combined)
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'VST/**'
+      - 'CMakeLists.txt'
+      - 'BlackHole/**'
+      - 'Scripts/**'
+      - '.github/workflows/build-all.yml'
+  workflow_dispatch:
+
+jobs:
+  build-suite:
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build XACmusic driver
+        env:
+          DRIVER_NAME: XACmusic
+          BUNDLE_ID: audio.xac.XACmusic
+          CHANNELS: "2"
+          PKG_NAME: XACmusic
+        run: |
+          set -e
+          git checkout -- BlackHole/BlackHole.c 2>/dev/null || true
+          bash Scripts/build-xacmusic.sh
+          mkdir -p drivers/HAL
+          cp -R "build/Symbols/Release/XACmusic2ch.driver" drivers/HAL/
+          git checkout -- BlackHole/BlackHole.c
+
+      - name: Build XACliv driver
+        env:
+          DRIVER_NAME: XACliv
+          BUNDLE_ID: audio.xac.XACliv
+          CHANNELS: "2"
+          PKG_NAME: XACliv
+        run: |
+          set -e
+          git checkout -- BlackHole/BlackHole.c 2>/dev/null || true
+          bash Scripts/build-xacliv.sh
+          mkdir -p drivers/HAL
+          cp -R "build/Symbols/Release/XACliv2ch.driver" drivers/HAL/
+          git checkout -- BlackHole/BlackHole.c
+
+      - name: Configure VST3 Unix Makefiles
+        run: |
+          set -e
+          rm -rf build
+          cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+
+      - name: Build VST3 capture full log
+        run: |
+          set -o pipefail
+          cmake --build build --config Release -- -j2 2>&1 | tee /tmp/build.log
+
+      - name: Stage and package combined
+        if: success()
+        run: |
+          set -e
+          mkdir -p stage/Library/Audio/Plug-Ins/HAL stage/Library/Audio/Plug-Ins/VST3 dist scripts
+          cp -R drivers/HAL/XACmusic2ch.driver stage/Library/Audio/Plug-Ins/HAL/
+          cp -R drivers/HAL/XACliv2ch.driver stage/Library/Audio/Plug-Ins/HAL/
+          XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
+          XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
+          echo "XAClive: $XACLIVE_VST3"
+          echo "XACmusic: $XACMUSIC_VST3"
+          [ -z "$XACLIVE_VST3" ] && { echo "ERROR: XAClive.vst3 not found"; exit 1; }
+          [ -z "$XACMUSIC_VST3" ] && { echo "ERROR: XACmusic.vst3 not found"; exit 1; }
+          cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
+          printf '#!/bin/bash\nkillall -9 coreaudiod 2>/dev/null || true\nexit 0\n' > scripts/postinstall
+          chmod +x scripts/postinstall
+          pkgbuild --root stage --identifier audio.xac.XACAudio --version 1.0.0 --install-location / --scripts scripts dist/XACAudio.pkg
+          ls -lh dist/XACAudio.pkg
+
+      - name: Upload build logs always
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: /tmp/build.log
+
+      - name: Upload combined pkg
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: XACAudio-pkg
+          path: dist/XACAudio.pkg
