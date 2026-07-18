@@ -23,7 +23,7 @@ jobs:
 
       - name: Build XACmusic driver
         env:
-          DRIVER_NAME: XACmusic
+          DRIVER_NAME: 'XAC music'
           BUNDLE_ID: audio.xac.XACmusic
           CHANNELS: "2"
           PKG_NAME: XACmusic
@@ -32,12 +32,12 @@ jobs:
           git checkout -- BlackHole/BlackHole.c 2>/dev/null || true
           bash Scripts/build-xacmusic.sh
           mkdir -p drivers/HAL
-          cp -R "build/Symbols/Release/XACmusic2ch.driver" drivers/HAL/
+          cp -R "build/Symbols/Release/XAC music 2ch.driver" drivers/HAL/
           git checkout -- BlackHole/BlackHole.c
 
       - name: Build XACliv driver
         env:
-          DRIVER_NAME: XAClive
+          DRIVER_NAME: 'XAC live'
           BUNDLE_ID: audio.xac.XAClive
           CHANNELS: "2"
           PKG_NAME: XAClive
@@ -46,7 +46,7 @@ jobs:
           git checkout -- BlackHole/BlackHole.c 2>/dev/null || true
           bash Scripts/build-xacliv.sh
           mkdir -p drivers/HAL
-          cp -R "build/Symbols/Release/XAClive2ch.driver" drivers/HAL/
+          cp -R "build/Symbols/Release/XAC live 2ch.driver" drivers/HAL/
           git checkout -- BlackHole/BlackHole.c
 
       - name: Configure VST3 Unix Makefiles
@@ -65,8 +65,8 @@ jobs:
         run: |
           set -e
           mkdir -p stage/Library/Audio/Plug-Ins/HAL stage/Library/Audio/Plug-Ins/VST3 dist scripts
-          cp -R drivers/HAL/XACmusic2ch.driver stage/Library/Audio/Plug-Ins/HAL/
-          cp -R drivers/HAL/XAClive2ch.driver stage/Library/Audio/Plug-Ins/HAL/
+          cp -R "drivers/HAL/XAC music 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
+          cp -R "drivers/HAL/XAC live 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
           XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
           XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
           echo "XAClive: $XACLIVE_VST3"
