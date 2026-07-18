@@ -32,26 +32,22 @@ jobs:
           set -e
           mkdir -p stage/Library/Audio/Plug-Ins/VST3 dist
 
-          XACLIVE_VST3=
-          XACMUSIC_VST3=
+          XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
+          XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
 
-          echo "XAClive.vst3 found at: " + 
-          echo "XACmusic.vst3 found at: " + 
+          echo "XAClive at: $XACLIVE_VST3"
+          echo "XACmusic at: $XACMUSIC_VST3"
 
-          if [ -z "" ] || [ -z "" ]; then
+          if [ -z "$XACLIVE_VST3" ] || [ -z "$XACMUSIC_VST3" ]; then
             echo "ERROR: VST3 files not found!"
             exit 1
           fi
 
-          cp -R "" stage/Library/Audio/Plug-Ins/VST3/
-          cp -R "" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
           ls -la stage/Library/Audio/Plug-Ins/VST3/
 
-          pkgbuild --root stage \
-            --identifier audio.xac.XACVST \
-            --version 1.0.0 \
-            --install-location / \
-            dist/XACVST.pkg
+          pkgbuild --root stage             --identifier audio.xac.XACVST             --version 1.0.0             --install-location /             dist/XACVST.pkg
 
           echo "Package built:"
           ls -lh dist/XACVST.pkg
