@@ -67,16 +67,14 @@ jobs:
           mkdir -p stage/Library/Audio/Plug-Ins/HAL stage/Library/Audio/Plug-Ins/VST3 dist scripts
           cp -R "drivers/HAL/XAC music 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
           cp -R "drivers/HAL/XAC live 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
-          XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
-          XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
+          XACLIVE_VST3=$(find build -name "XAC live.vst3" -type d 2>/dev/null | head -1)
+          XACMUSIC_VST3=$(find build -name "XAC music.vst3" -type d 2>/dev/null | head -1)
           echo "XAClive: $XACLIVE_VST3"
           echo "XACmusic: $XACMUSIC_VST3"
-          [ -z "$XACLIVE_VST3" ] && { echo "ERROR: XAClive.vst3 not found"; exit 1; }
-          [ -z "$XACMUSIC_VST3" ] && { echo "ERROR: XACmusic.vst3 not found"; exit 1; }
+          [ -z "$XACLIVE_VST3" ] && { echo "ERROR: XAC live.vst3 not found"; exit 1; }
+          [ -z "$XACMUSIC_VST3" ] && { echo "ERROR: XAC music.vst3 not found"; exit 1; }
           cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
-          mv stage/Library/Audio/Plug-Ins/VST3/XAClive.vst3 "stage/Library/Audio/Plug-Ins/VST3/XAC live.vst3"
           cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
-          mv stage/Library/Audio/Plug-Ins/VST3/XACmusic.vst3 "stage/Library/Audio/Plug-Ins/VST3/XAC music.vst3"
           printf '#!/bin/bash\nkillall -9 coreaudiod 2>/dev/null || true\nexit 0\n' > scripts/postinstall
           chmod +x scripts/postinstall
           pkgbuild --root stage --identifier audio.xac.XACAudio --version 1.0.0 --install-location / --scripts scripts dist/XACAudio.pkg
