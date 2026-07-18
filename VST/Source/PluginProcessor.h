@@ -41,3 +41,4 @@ private:
     std::atomic<float> inputMeter{0.0f}, outputMeter{0.0f};
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(XACAudioProcessor)
 };
+// trigger build
