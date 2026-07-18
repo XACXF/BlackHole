@@ -19,13 +19,27 @@ jobs:
       - name: Configure (Unix Makefiles)
         run: |
           cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
-          cmake --build build --target help 2>&1 | head -30
 
       - name: Build XAClive
-        run: cmake --build build --target XAClive --config Release -- -j2 2>&1 | tail -5
+        run: cmake --build build --target XAClive --config Release -- -j2
 
       - name: Build XACmusic
-        run: cmake --build build --target XACmusic --config Release -- -j2 2>&1 | tail -5
+        run: cmake --build build --target XACmusic --config Release -- -j2
+
+      - name: Debug: find all .vst3 artifacts
+        run: |
+          echo "=== All .vst3 dirs ==="
+          find build -name "*.vst3" -type d 2>/dev/null
+          echo "=== All XAC* dirs in build ==="
+          find build -name "XAClive*" -type d 2>/dev/null
+          find build -name "XACmusic*" -type d 2>/dev/null
+          echo "=== build/artefacts dirs ==="
+          find build -path "*/artefacts*" -type d 2>/dev/null
+          echo "=== build/Release dirs ==="
+          find build -path "*/Release*" -type d 2>/dev/null | head -20
+          echo "=== VST3 bundle dir check ==="
+          ls -la build/XAClive_artefacts/ 2>/dev/null || echo "XAClive_artefacts NOT found"
+          ls -la build/XACmusic_artefacts/ 2>/dev/null || echo "XACmusic_artefacts NOT found"
 
       - name: Find and stage VST3, then package
         run: |
@@ -35,8 +49,8 @@ jobs:
           XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
           XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
 
-          echo "XAClive at: $XACLIVE_VST3"
-          echo "XACmusic at: $XACMUSIC_VST3"
+          echo "XAClive.vst3 found at: $XACLIVE_VST3"
+          echo "XACmusic.vst3 found at: $XACMUSIC_VST3"
 
           if [ -z "$XACLIVE_VST3" ] || [ -z "$XACMUSIC_VST3" ]; then
             echo "ERROR: VST3 files not found!"
@@ -46,6 +60,9 @@ jobs:
           cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
           cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
           ls -la stage/Library/Audio/Plug-Ins/VST3/
+
+          echo "Stage size:"
+          du -sh stage/
 
           pkgbuild --root stage             --identifier audio.xac.XACVST             --version 1.0.0             --install-location /             dist/XACVST.pkg
 
