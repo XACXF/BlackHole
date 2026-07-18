@@ -32,7 +32,7 @@ xcodebuild -project BlackHole.xcodeproj \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
 
-DRIVER_DIR="build/Symbols/Release/${TARGET_NAME}"
+DRIVER_DIR="build/Symbols/Release/XAC music 2ch.driver"
 if [ ! -d "$DRIVER_DIR" ]; then
     echo "ERROR: Driver not found at $DRIVER_DIR"
     exit 1
