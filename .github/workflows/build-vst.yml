@@ -16,26 +16,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure with Xcode
+      - name: Configure (Unix Makefiles)
         run: |
-          cmake -B build -S . -G "Xcode" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
-          echo "=== Available targets ==="
-          cmake --build build --target help | grep -i -E "(xac|vst|live|music)"
+          cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+          cmake --build build --target help 2>&1 | head -30
 
       - name: Build XAClive
-        run: cmake --build build --target XAClive --config Release -j 2
+        run: cmake --build build --target XAClive --config Release -- -j2 2>&1 | tail -5
 
       - name: Build XACmusic
-        run: cmake --build build --target XACmusic --config Release -j 2
+        run: cmake --build build --target XACmusic --config Release -- -j2 2>&1 | tail -5
 
-      - name: Stage and package
+      - name: Find and stage VST3, then package
         run: |
           set -e
           mkdir -p stage/Library/Audio/Plug-Ins/VST3 dist
-          cp -R build/XAClive_artefacts/Release/VST3/XAClive.vst3 stage/Library/Audio/Plug-Ins/VST3/
-          cp -R build/XACmusic_artefacts/Release/VST3/XACmusic.vst3 stage/Library/Audio/Plug-Ins/VST3/
-          pkgbuild --root stage --identifier audio.xac.XACVST --version 1.0.0 --install-location / dist/XACVST.pkg
-          ls -lh dist
+
+          XACLIVE_VST3=
+          XACMUSIC_VST3=
+
+          echo "XAClive.vst3 found at: " + 
+          echo "XACmusic.vst3 found at: " + 
+
+          if [ -z "" ] || [ -z "" ]; then
+            echo "ERROR: VST3 files not found!"
+            exit 1
+          fi
+
+          cp -R "" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "" stage/Library/Audio/Plug-Ins/VST3/
+          ls -la stage/Library/Audio/Plug-Ins/VST3/
+
+          pkgbuild --root stage \
+            --identifier audio.xac.XACVST \
+            --version 1.0.0 \
+            --install-location / \
+            dist/XACVST.pkg
+
+          echo "Package built:"
+          ls -lh dist/XACVST.pkg
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
