@@ -17,7 +17,7 @@ public:
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
-    const juce::String getName() const override { return "XAC Bridge"; }
+    juce::Identifier getName() const override { return "XAC Bridge"; }
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
@@ -26,8 +26,8 @@ public:
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
     void setCurrentProgram(int) override {}
-    const juce::String getProgramName(int) override { return {}; }
-    void changeProgramName(int, const juce::String&) override {}
+    juce::Identifier getProgramName(int) override { return {}; }
+    void changeProgramName(int, const juce::Identifier&) override {}
 
     void getStateInformation(juce::MemoryBlock& dest) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
