@@ -17,8 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure (Unix Makefiles)
-        run: |
-          cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
+        run: cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
       - name: Build XAClive
         run: cmake --build build --target XAClive --config Release -- -j2
@@ -30,16 +29,10 @@ jobs:
         run: |
           echo "=== All .vst3 dirs ==="
           find build -name "*.vst3" -type d 2>/dev/null
-          echo "=== All XAC* dirs in build ==="
-          find build -name "XAClive*" -type d 2>/dev/null
-          find build -name "XACmusic*" -type d 2>/dev/null
-          echo "=== build/artefacts dirs ==="
-          find build -path "*/artefacts*" -type d 2>/dev/null
-          echo "=== build/Release dirs ==="
-          find build -path "*/Release*" -type d 2>/dev/null | head -20
-          echo "=== VST3 bundle dir check ==="
-          ls -la build/XAClive_artefacts/ 2>/dev/null || echo "XAClive_artefacts NOT found"
-          ls -la build/XACmusic_artefacts/ 2>/dev/null || echo "XACmusic_artefacts NOT found"
+          echo "=== VST3 bundle sizes ==="
+          for f in $(find build -name "*.vst3" -type d 2>/dev/null); do
+            echo "$f: $(du -sh "$f" | cut -f1)"
+          done
 
       - name: Find and stage VST3, then package
         run: |
@@ -60,13 +53,9 @@ jobs:
           cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
           cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
           ls -la stage/Library/Audio/Plug-Ins/VST3/
-
-          echo "Stage size:"
           du -sh stage/
 
-          pkgbuild --root stage             --identifier audio.xac.XACVST             --version 1.0.0             --install-location /             dist/XACVST.pkg
-
-          echo "Package built:"
+          pkgbuild --root stage --identifier audio.xac.XACVST --version 1.0.0 --install-location / dist/XACVST.pkg
           ls -lh dist/XACVST.pkg
 
       - name: Upload artifact
