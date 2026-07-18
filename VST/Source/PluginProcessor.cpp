@@ -6,11 +6,11 @@ XACAudioProcessor::XACAudioProcessor()
     : AudioProcessor(BusesProperties()
           .withInput("Input", juce::AudioChannelSet::stereo(), true)
           .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      parameters(*this, nullptr, juce::Identifier("XACBridge"),
-          { std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("inputGain", 1), "Input Gain", -60.0f, 12.0f, 0.0f),
-            std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("outputLevel", 2), "Output Level", -60.0f, 0.0f, 0.0f),
-            std::make_unique<juce::AudioParameterBool>(juce::ParameterID("phase", 3), "Phase Invert", false),
-            std::make_unique<juce::AudioParameterBool>(juce::ParameterID("bypass", 4), "Bypass", false) })
+      parameters(*this, nullptr, "XACBridge",
+          { std::make_unique<juce::AudioParameterFloat>("inputGain", "Input Gain", -60.0f, 12.0f, 0.0f),
+            std::make_unique<juce::AudioParameterFloat>("outputLevel", "Output Level", -60.0f, 0.0f, 0.0f),
+            std::make_unique<juce::AudioParameterBool>("phase", "Phase Invert", false),
+            std::make_unique<juce::AudioParameterBool>("bypass", "Bypass", false) })
 {
 }
 
@@ -45,18 +45,18 @@ void XACAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::Mid
     for (int ch = 0; ch < numOut; ++ch)
     {
         auto* out = buffer.getWritePointer(ch);
-        auto* in = buffer.getReadPointer(jmin(ch, numIn - 1));
+        auto* in = buffer.getReadPointer((numIn > 0) ? ch : 0);
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
             float x = in[s];
             float y = bypass ? x : (phase ? -x * gain : x * gain) * lvl;
             out[s] = y;
-            inPeak = jmax(inPeak, std::abs(x));
-            outPeak = jmax(outPeak, std::abs(y));
+            inPeak = std::fmax(inPeak, std::abs(x));
+            outPeak = std::fmax(outPeak, std::abs(y));
         }
     }
-    inputMeter.store(inPeak);
-    outputMeter.store(outPeak);
+    inputMeter.store(inPeak, std::memory_order_relaxed);
+    outputMeter.store(outPeak, std::memory_order_relaxed);
 }
 
 juce::AudioProcessorEditor* XACAudioProcessor::createEditor()
