@@ -19,46 +19,48 @@ jobs:
       - name: Configure (Unix Makefiles)
         run: cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
-      - name: Build XAClive
-        run: cmake --build build --target XAClive --config Release -- -j2
+      - name: Build all (capture full log)
+        run: |
+          set -o pipefail
+          cmake --build build --config Release -- -j2 2>&1 | tee /tmp/build.log
 
-      - name: Build XACmusic
-        run: cmake --build build --target XACmusic --config Release -- -j2
-
-      - name: Debug: find all .vst3 artifacts
+      - name: Debug: find .vst3 artifacts
+        if: always()
         run: |
           echo "=== All .vst3 dirs ==="
           find build -name "*.vst3" -type d 2>/dev/null
-          echo "=== VST3 bundle sizes ==="
+          echo "=== Sizes ==="
           for f in $(find build -name "*.vst3" -type d 2>/dev/null); do
             echo "$f: $(du -sh "$f" | cut -f1)"
           done
 
-      - name: Find and stage VST3, then package
+      - name: Stage and package
+        if: success()
         run: |
           set -e
           mkdir -p stage/Library/Audio/Plug-Ins/VST3 dist
-
           XACLIVE_VST3=$(find build -name "XAClive.vst3" -type d 2>/dev/null | head -1)
           XACMUSIC_VST3=$(find build -name "XACmusic.vst3" -type d 2>/dev/null | head -1)
-
-          echo "XAClive.vst3 found at: $XACLIVE_VST3"
-          echo "XACmusic.vst3 found at: $XACMUSIC_VST3"
-
+          echo "XAClive: $XACLIVE_VST3"
+          echo "XACmusic: $XACMUSIC_VST3"
           if [ -z "$XACLIVE_VST3" ] || [ -z "$XACMUSIC_VST3" ]; then
-            echo "ERROR: VST3 files not found!"
+            echo "ERROR: VST3 not found"
             exit 1
           fi
-
           cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
           cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
-          ls -la stage/Library/Audio/Plug-Ins/VST3/
-          du -sh stage/
-
           pkgbuild --root stage --identifier audio.xac.XACVST --version 1.0.0 --install-location / dist/XACVST.pkg
           ls -lh dist/XACVST.pkg
 
-      - name: Upload artifact
+      - name: Upload build logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: /tmp/build.log
+
+      - name: Upload pkg
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: XACVST-pkg

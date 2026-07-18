@@ -2,10 +2,10 @@
 
 XACAudioEditor::XACAudioEditor(XACAudioProcessor& p)
     : AudioProcessorEditor(p), processor(p),
-      inputGainAttach(p.parameters, juce::ParameterID("inputGain", 1), inputGain),
-      outputLevelAttach(p.parameters, juce::ParameterID("outputLevel", 2), outputLevel),
-      phaseAttach(p.parameters, juce::ParameterID("phase", 3), phase),
-      bypassAttach(p.parameters, juce::ParameterID("bypass", 4), bypass)
+      inputGainAttach(p.parameters, "inputGain", inputGain),
+      outputLevelAttach(p.parameters, "outputLevel", outputLevel),
+      phaseAttach(p.parameters, "phase", phase),
+      bypassAttach(p.parameters, "bypass", bypass)
 {
     setSize(360, 240);
 
@@ -55,4 +55,3 @@ void XACAudioEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey.darker());
 }
-// BUILD: 1784335904.3654754
