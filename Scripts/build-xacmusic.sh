@@ -5,7 +5,7 @@ DRIVER_NAME="${DRIVER_NAME:-XACmusic}"
 BUNDLE_ID="${BUNDLE_ID:-audio.xac.XACmusic}"
 CHANNELS="${CHANNELS:-2}"
 PKG_NAME="${PKG_NAME:-XACmusic}"
-TARGET_NAME="${DRIVER_NAME}${CHANNELS}ch.driver"
+TARGET_NAME="${DRIVER_NAME}2ch.driver"
 
 echo "============================================"
 echo "Building ${DRIVER_NAME} (${CHANNELS}ch)"
@@ -24,7 +24,7 @@ xcodebuild -project BlackHole.xcodeproj \
   -configuration Release \
   -target BlackHole \
   PRODUCT_BUNDLE_IDENTIFIER="${BUNDLE_ID}" \
-  PRODUCT_NAME="${DRIVER_NAME}${CHANNELS}ch" \
+  PRODUCT_NAME='XAC music 2ch' \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
   GCC_PREPROCESSOR_DEFINITIONS="kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_HasInput=0 kDevice2_HasOutput=0" \
