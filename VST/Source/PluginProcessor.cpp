@@ -77,3 +77,9 @@ void XACAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
     if (state.isValid())
         parameters.replaceState(state);
 }
+
+// JUCE VST3 entry point (required by juce_add_plugin)
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new XACAudioProcessor();
+}
