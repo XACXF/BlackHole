@@ -15,16 +15,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Configure (Unix Makefiles)
+      - name: Configure Unix Makefiles
         run: cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
-      - name: Build all (capture full log)
+      - name: Build all capture full log
         run: |
           set -o pipefail
           cmake --build build --config Release -- -j2 2>&1 | tee /tmp/build.log
 
-      - name: Debug: find .vst3 artifacts
+      - name: Find vst3 artifacts debug
         if: always()
         run: |
           echo "=== All .vst3 dirs ==="
@@ -52,7 +54,7 @@ jobs:
           pkgbuild --root stage --identifier audio.xac.XACVST --version 1.0.0 --install-location / dist/XACVST.pkg
           ls -lh dist/XACVST.pkg
 
-      - name: Upload build logs (always)
+      - name: Upload build logs always
         if: always()
         uses: actions/upload-artifact@v4
         with:
