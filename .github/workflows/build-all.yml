@@ -49,34 +49,58 @@ jobs:
           cp -R "build/Symbols/Release/XAC live 2ch.driver" drivers/HAL/
           git checkout -- BlackHole/BlackHole.c
 
-      - name: Configure VST3 Unix Makefiles
+      - name: Configure VST3+AU Unix Makefiles
         run: |
           set -e
           rm -rf build
           cmake -B build -S . -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64
 
-      - name: Build VST3 capture full log
+      - name: Build VST3+AU capture full log
         run: |
           set -o pipefail
           cmake --build build --config Release -- -j2 2>&1 | tee /tmp/build.log
 
-      - name: Stage and package combined
+      - name: Stage and package combined (VST3 + AU + drivers)
         if: success()
         run: |
           set -e
-          mkdir -p stage/Library/Audio/Plug-Ins/HAL stage/Library/Audio/Plug-Ins/VST3 dist scripts
+          mkdir -p stage/Library/Audio/Plug-Ins/HAL stage/Library/Audio/Plug-Ins/VST3 stage/Library/Audio/Plug-Ins/Components dist scripts
+
+          # Copy drivers (HAL)
           cp -R "drivers/HAL/XAC music 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
           cp -R "drivers/HAL/XAC live 2ch.driver" stage/Library/Audio/Plug-Ins/HAL/
-          XACLIVE_VST3=$(find build -name "XAC live.vst3" -type d 2>/dev/null | head -1)
+
+          # Find VST3 bundles
           XACMUSIC_VST3=$(find build -name "XAC music.vst3" -type d 2>/dev/null | head -1)
-          echo "XAClive: $XACLIVE_VST3"
-          echo "XACmusic: $XACMUSIC_VST3"
-          [ -z "$XACLIVE_VST3" ] && { echo "ERROR: XAC live.vst3 not found"; exit 1; }
+          XACLIVE_VST3=$(find build -name "XAC live.vst3" -type d 2>/dev/null | head -1)
+          echo "XACmusic VST3: $XACMUSIC_VST3"
+          echo "XAClive VST3: $XACLIVE_VST3"
           [ -z "$XACMUSIC_VST3" ] && { echo "ERROR: XAC music.vst3 not found"; exit 1; }
-          cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
+          [ -z "$XACLIVE_VST3" ] && { echo "ERROR: XAC live.vst3 not found"; exit 1; }
           cp -R "$XACMUSIC_VST3" stage/Library/Audio/Plug-Ins/VST3/
+          cp -R "$XACLIVE_VST3" stage/Library/Audio/Plug-Ins/VST3/
+
+          # Find AU component bundles
+          XACMUSIC_AU=$(find build -name "XAC music.component" -type d 2>/dev/null | head -1)
+          XACLIVE_AU=$(find build -name "XAC live.component" -type d 2>/dev/null | head -1)
+          echo "XACmusic AU: $XACMUSIC_AU"
+          echo "XAClive AU: $XACLIVE_AU"
+          if [ -n "$XACMUSIC_AU" ]; then
+            cp -R "$XACMUSIC_AU" stage/Library/Audio/Plug-Ins/Components/
+          else
+            echo "WARNING: XAC music.component not found (AU may not have built)"
+          fi
+          if [ -n "$XACLIVE_AU" ]; then
+            cp -R "$XACLIVE_AU" stage/Library/Audio/Plug-Ins/Components/
+          else
+            echo "WARNING: XAC live.component not found (AU may not have built)"
+          fi
+
+          # Postinstall script
           printf '#!/bin/bash\nkillall -9 coreaudiod 2>/dev/null || true\nexit 0\n' > scripts/postinstall
           chmod +x scripts/postinstall
+
+          # Build combined pkg
           pkgbuild --root stage --identifier audio.xac.XACAudio --version 1.0.0 --install-location / --scripts scripts dist/XACAudio.pkg
           ls -lh dist/XACAudio.pkg
 
