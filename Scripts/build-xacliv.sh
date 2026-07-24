@@ -17,7 +17,7 @@ rm -rf "dist/${PKG_NAME}.pkg"
 
 # Modify BlackHole.c defaults
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
-sed -i '' "s/\"com.apple.audio.BlackHoleSoundCard\"/\"${BUNDLE_ID}\"/g" BlackHole/BlackHole.c
+sed -i '' "s/audio\\.existential\\.BlackHole2ch/${BUNDLE_ID}2ch/g" BlackHole/BlackHole.c
 
 # Build the driver
 xcodebuild -project BlackHole.xcodeproj \
