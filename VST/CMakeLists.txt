@@ -15,7 +15,7 @@ juce_add_plugin(XAClive
     BUNDLE_ID "audio.xac.XAClive"
     PLUGIN_MANUFACTURER_CODE "XACx"
     PLUGIN_CODE "Xlv1"
-    FORMATS VST3
+    FORMATS VST3 AU
     PRODUCT_NAME "XAC live"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
@@ -39,7 +39,7 @@ juce_add_plugin(XACmusic
     BUNDLE_ID "audio.xac.XACmusic"
     PLUGIN_MANUFACTURER_CODE "XACx"
     PLUGIN_CODE "Xmu1"
-    FORMATS VST3
+    FORMATS VST3 AU
     PRODUCT_NAME "XAC music"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
