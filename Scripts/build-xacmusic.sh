@@ -17,7 +17,7 @@ rm -rf "dist/${PKG_NAME}.pkg"
 
 # Modify BlackHole.c defaults
 sed -i '' "s/\"BlackHole\"/\"${DRIVER_NAME}\"/g" BlackHole/BlackHole.c
-sed -i '' "s/\"com.apple.audio.BlackHoleSoundCard\"/\"${BUNDLE_ID}\"/g" BlackHole/BlackHole.c
+sed -i '' "s/audio\\.existential\\.BlackHole2ch/${BUNDLE_ID}2ch/g" BlackHole/BlackHole.c
 
 # Build the driver
 xcodebuild -project BlackHole.xcodeproj \
@@ -27,7 +27,7 @@ xcodebuild -project BlackHole.xcodeproj \
   PRODUCT_NAME='XAC music 2ch' \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGNING_ALLOWED=NO \
-  GCC_PREPROCESSOR_DEFINITIONS="kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_HasInput=0 kDevice2_HasOutput=0" \
+  GCC_PREPROCESSOR_DEFINITIONS="kNumber_Of_Channels=${CHANNELS} kLatency_Frame_Size=128 kDevice_HasInput=1 kDevice_HasOutput=1 kDevice2_HasInput=0 kDevice2_HasOutput=0 kSampleRates=44100,48000,88200,96000,176400,192000" \
   OBJROOT=build/Objects \
   SYMROOT=build/Symbols \
   DSTROOT=build/Archive 2>&1
@@ -37,17 +37,12 @@ if [ ! -d "$DRIVER_DIR" ]; then
     echo "ERROR: Driver not found at $DRIVER_DIR"
     exit 1
 fi
-
 echo "Driver built: $DRIVER_DIR"
 
-echo "Driver built: $DRIVER_DIR"
-
-# Package as a flat component .pkg (compatible with macOS 12 through macOS 26)
 PKG_PATH="dist/${PKG_NAME}.pkg"
 rm -f "$PKG_PATH"
 mkdir -p "$(dirname "$PKG_PATH")"
 
-# Post-install script: reload coreaudiod so the new device appears
 SCRIPTS_DIR="build/pkg_scripts_${PKG_NAME}"
 rm -rf "$SCRIPTS_DIR"
 mkdir -p "$SCRIPTS_DIR"
@@ -58,8 +53,6 @@ exit 0
 POST_EOF
 chmod +x "$SCRIPTS_DIR/postinstall"
 
-echo ""
-echo "Creating .pkg (flat, macOS 12+ compatible) ..."
 pkgbuild --identifier "${BUNDLE_ID}" \
   --version "1.0.0" \
   --install-location "/Library/Audio/Plug-Ins/HAL" \
